@@ -15,5 +15,6 @@ if __name__ == '__main__':
     print_hi('PyCharm')
     a = torch.Tensor(3,4,5,8)
     print(a.shape)
+    print("test")
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
