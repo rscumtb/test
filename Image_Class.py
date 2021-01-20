@@ -2,6 +2,7 @@ import torch
 import math
 import numpy as np
 import math
+import datetime
 import torch.nn as nn
 from torchvision import datasets, transforms
 
@@ -16,12 +17,13 @@ class MNISTNet(nn.Module):
         x = torch.tanh(x)
 
         x = self.layer2(x)
-        x = nn.ReLU(x)
-        x = nn.Softmax(x,dim = 1)
+        x = nn.functional.relu(x)
+        x = nn.functional.log_softmax(x,dim = 1)
         return x
 
 if __name__ == "__main__":
 
+    start_time = datetime.datetime.now()
     bDownload = True
     if(bDownload):
         mnist_dataset = datasets.MNIST('../data',train = True, download=True, \
@@ -35,16 +37,18 @@ if __name__ == "__main__":
     bTrainMode = True
     if(bTrainMode):
         model = MNISTNet()
-        epochs = 10
+        epochs = 5
         train_loader = torch.utils.data.DataLoader(datasets.MNIST('../data',train = True, download=True,\
                                                                   transform=transforms.Compose([transforms.ToTensor,\
                                                                                                 transforms.Normalize((0.0,),(1.0,))])),\
                                                    batch_size = 64, shuffle = True, num_workers = 1)
+        help(train_loader)
 
 
         optimizer = torch.optim.SGD(model.parameters(),0.01,momentum=0.9)
 
         #Train
+        #dataloader_enumerate  = enumerate(data_loader)
         for epoch in range(1,epochs+1):
             model.train()
             for batch_idx, (data, target) in enumerate(data_loader):
@@ -60,9 +64,11 @@ if __name__ == "__main__":
         random_seed = 123
         torch.manual_seed(random_seed)
 
-        test_loader = torch.utils.data.DataLoader(datasets.MNIST('../data', train = False, transform= transforms.Compose([
-                                                  transforms.ToTensor(),transforms.Normalize((0.,),(1.,))], batch_size = 32, shuffle = True,
-                                                  num_workders = 1)))
+        test_loader = torch.utils.data.DataLoader(datasets.MNIST('../data', train=False, \
+                                                                  transform=transforms.Compose([transforms.ToTensor, \
+                                                                                                transforms.Normalize(
+                                                                                                    (0.0,), (1.0,))])), \
+                                                   batch_size=64, shuffle=True, num_workers=1)
 
         #eval
         model.eval()
@@ -78,6 +84,9 @@ if __name__ == "__main__":
         test_loss /= len(data_loader.dataset)
         print("Test Set: Average Loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)".format(test_loss,correct,len(data_loader.dataset),100. * correct / len(data_loader.dataset)))
 
+
+    endtime = datetime.datetime.now()
+    print(start_time,endtime)
 
 
 
