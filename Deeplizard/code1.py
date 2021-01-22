@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
@@ -16,6 +18,32 @@ class Network(nn.Module):
         self.out = nn.Linear(in_features=60,out_features=10)
 
     def forward(self,t):
+        #(1) input layer
+        t  = t
+
+        #(2) hidden conv layer
+        t = self.conv1(t)
+        t = F.relu(t)
+        t = F.max_pool2d(t,kernel_size = 2, stride = 2)
+
+        #(3) hiddden conv layer
+        t = self.conv2(t)
+        t = F.relu(t)
+        t = F.max_pool2d(t,kernel_size = 2,stride = 2)
+
+
+        #(4) hiden linear layer
+        t = t.reshape(-1,12 * 4 * 4)
+        t = self.fc1(t)
+        t = F.relu(t)
+
+        #(5) hidden linear layer
+        t = self.fc2(t)
+        t = F.relu(t)
+
+
+        #(6) hidden linear layer (output)
+        t = self.out(t)
         return t
 
 
@@ -32,28 +60,36 @@ if __name__ == "__main__":
         ])
     )
 
-    train_loader = torch.utils.data.DataLoader(train_set,batch_size = 10)
-    print("length of train set is {}".format(len(train_set)))
-    print(train_set.targets)
-    print(train_set.targets.bincount())
+    torch.set_grad_enabled(True)
 
-    sample = next(iter(train_set))
-    image,label = sample
-    print(image.shape)
-    plt.imshow(image.squeeze())
+    network = Network()
+
+    data_loader = torch.utils.data.DataLoader(
+                                                train_set,
+                                                batch_size = 100
+    )
+
+    optimizer = optim.Adam(network.parameters(), lr=0.01)
+
+    for epoch in range(5):
+        total_loss = 0
+        total_correct = 0
+        for batch in data_loader:
+            images, labels = batch
+            preds          = network(images)
+            loss = F.cross_entropy(preds, labels)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
+            total_correct += preds.argmax(dim = 1).eq(labels).sum().item()
+        print("Epoch: ",epoch, "Total Loss: ", total_loss, "Total Correct: ", total_correct, "Total Correct Percentage: ", total_correct/len(train_set))
 
 
-    train_loader = torch.utils.data.DataLoader(train_set,batch_size = 100)
-    batch = next(iter(train_loader))
-    images,labels = batch
-    print(image.shape)
-    grid = torchvision.utils.make_grid(images,nrow = 10)
-    print("Grid shape is {}".format(grid.shape))
-    plt.imshow(np.transpose(grid,(1,2,0)))
-    print("Lables: ", labels)
 
 
-
+    print("OK")
     print("OK")
     print("OK2")
     print("OK3")
