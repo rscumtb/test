@@ -101,36 +101,3 @@ if __name__ == "__main__":
     endtime = datetime.datetime.now()
     deltatime = endtime - starttime
     print("We have spend :{} seconds.".format(deltatime.seconds))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

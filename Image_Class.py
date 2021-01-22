@@ -24,6 +24,7 @@ class MNISTNet(nn.Module):
 if __name__ == "__main__":
 
     start_time = datetime.datetime.now()
+    device = torch.device("cuda:0")
     bDownload = True
     if(bDownload):
         mnist_dataset = datasets.MNIST('../data',train = True, download=True, \
@@ -31,19 +32,17 @@ if __name__ == "__main__":
                                            transforms.ToTensor(),\
                                            transforms.Normalize((0.0,),(1.0,))\
                                            ]))
-        data_loader = torch.utils.data.DataLoader(mnist_dataset,batch_size = 32, shuffle = True, num_workers = 10,\
+        data_loader = torch.utils.data.DataLoader(mnist_dataset,batch_size = 64, shuffle = True, num_workers = 10,\
                                                   **{"pin_memory": True})
 
     bTrainMode = True
     if(bTrainMode):
-        model = MNISTNet()
+        model = MNISTNet().to(device)
         epochs = 5
         train_loader = torch.utils.data.DataLoader(datasets.MNIST('../data',train = True, download=True,\
                                                                   transform=transforms.Compose([transforms.ToTensor,\
                                                                                                 transforms.Normalize((0.0,),(1.0,))])),\
                                                    batch_size = 64, shuffle = True, num_workers = 1)
-        help(train_loader)
-
 
         optimizer = torch.optim.SGD(model.parameters(),0.01,momentum=0.9)
 
@@ -53,8 +52,8 @@ if __name__ == "__main__":
             model.train()
             for batch_idx, (data, target) in enumerate(data_loader):
                 optimizer.zero_grad()
-                output = model(data)
-                loss   = nn.functional.nll_loss(output, target)
+                output = model(data.to(device))
+                loss   = nn.functional.nll_loss(output, target.to(device))
                 loss.backward()
                 optimizer.step()
 
@@ -76,10 +75,10 @@ if __name__ == "__main__":
         correct   = 0
         with torch.no_grad():
             for data, target in data_loader:
-                output = model(data)
-                test_loss  += nn.functional.nll_loss(output,target,reduction = 'sum').item()
+                output = model(data.to(device))
+                test_loss  += nn.functional.nll_loss(output,target.to(device),reduction = 'sum').item()
                 pred = output.max(1)[1]
-                correct += pred.eq(target).sum().item()
+                correct += pred.eq(target.to(device)).sum().item()
 
         test_loss /= len(data_loader.dataset)
         print("Test Set: Average Loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)".format(test_loss,correct,len(data_loader.dataset),100. * correct / len(data_loader.dataset)))
